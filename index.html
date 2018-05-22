@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+<meta charset="UTF-8"> 
+<title>Vector Generator</title>
+
+<head>
+
+<script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/latest.js?config=TeX-MML-AM_CHTML' async></script>
+
+<script>
+function checkStorage(){
+	if (typeof(Storage) !== "undefined") {} 
+	else {
+	document.write("This page is not supported by your browser.");
+	}
+}
+
+function setMaxVal(){
+	sessionStorage.maxVal = document.getElementById('maxComp').points.value;
+}
+
+function setRankVal(){
+	sessionStorage.rankVal = document.getElementById('dimensionChoice').dimchoice.value;
+}
+
+function getRankVal(){
+	return Number(sessionStorage.rankVal);
+}
+
+function getMaxVal(){
+	return Number(sessionStorage.maxVal);
+}
+
+function typeAsMatrix(vec, vecName){
+	switch(vec.length){
+		case 1:
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + vec[0] + " \\end{pmatrix} \\) ";
+			break;
+		case 2:
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + vec[0] + " \\\\ " + vec[1] + " \\end{pmatrix} \\) ";
+			break;
+		default:
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + vec[0] + " \\\\ " + vec[1] + " \\\\ " + vec[2] + " \\end{pmatrix} \\) ";
+	}
+}
+
+function addSymbol(element){
+	if (element < 0) {return "";}
+	else {return "+";}
+}
+
+function typeAsUnit(vec, vecName){
+	switch(vec.length){
+		case 1:
+			return " \\( \\vec{" + vecName + "} = " + vec[0] + "\\hat{i} \\) ";
+			break;
+		case 2:
+			return " \\( \\vec{" + vecName + "} = " + vec[0] + "\\hat{i} " + addSymbol(vec[1]) + vec[1] + "\\hat{j} \\) ";
+			break;
+		default:
+			return " \\( \\vec{" + vecName + "} = " + vec[0] + "\\hat{i} " + addSymbol(vec[1])  + vec[1] + "\\hat{j} " + addSymbol(vec[2])  + vec[2] + "\\hat{k} \\) ";
+	}
+}
+
+function typeAsMagAngle(vec, vecName){
+	switch(vec.length){
+		case 1:
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + vec[0] + " \\end{pmatrix} \\) ";
+			break;
+		case 2:
+			mag = Math.sqrt(Math.pow(vec[0], 2) + Math.pow(vec[1], 2));
+			theta = Math.atan2(vec[1], vec[0])*180/Math.PI;
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + mag.toFixed(2) + " \\\\ " + theta.toFixed(2) + "^\\circ \\end{pmatrix} \\) ";
+			break;
+		default:
+			mag = Math.sqrt(Math.pow(vec[0], 2) + Math.pow(vec[1], 2) + Math.pow(vec[2], 2));
+			theta = Math.atan2(vec[1], vec[0])*180/Math.PI;
+			phi = Math.acos(vec[2]/mag)*180/Math.PI;
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + mag.toFixed(2) + " \\\\ \\theta = " + theta.toFixed(2) + "^\\circ \\\\ \\phi = " + phi.toFixed(2) + "^\\circ  \\end{pmatrix} \\) ";
+	}
+}
+
+function typeAsRandom(vec, vecName){
+	chooser = Math.floor(Math.random()*2.99999);
+	switch(chooser){
+		case 0: return typeAsMatrix(vec, vecName); break;
+		case 1: return typeAsUnit(vec, vecName); break;
+		default: return typeAsMagAngle(vec, vecName);
+	}
+}
+
+function makeVector() {
+	maxComponent = getMaxVal();
+	rank = getRankVal();
+	vec = [];
+	var i;
+	for (i = 0; i < rank; i++){
+		newComp = Math.floor(Math.random()*maxComponent);
+		if (Math.random() < 0.5) {newComp *= -1;}
+		vec.push(newComp);
+	}
+	return vec;
+}
+
+function genVector(){
+	vecA = makeVector();
+	sessionStorage.vecA = JSON.stringify(vecA);
+	vecB = makeVector();
+	sessionStorage.vecB = JSON.stringify(vecB);
+	document.getElementById('vector01').innerHTML = typeAsRandom(vecA, "A") + ", " + typeAsRandom(vecB, "B");
+	document.getElementById('reveal').innerHTML = "";
+	document.getElementById('reveal2').innerHTML = "";
+	document.getElementById('reveal3').innerHTML = "";
+	MathJax.Hub.Typeset();
+	AplusB = vecSum(vecA, vecB);
+	sessionStorage.AplusB = JSON.stringify(AplusB);
+	AcrossB = crossProduct(vecA, vecB);
+	sessionStorage.AcrossB = JSON.stringify(AcrossB);
+	AdotB = dotProduct(vecA, vecB);
+	sessionStorage.AdotB = JSON.stringify(AdotB);
+	document.getElementById("revealButton").disabled = false;
+	document.getElementById('successResponse').innerHTML = "";
+}
+
+function reveal(){
+	vec = JSON.parse(sessionStorage.AplusB);
+	goodAnswers = checkAnswers();
+	document.getElementById('reveal').innerHTML = " \\( " + vec[0] + "\\hat{i} " + addSymbol(vec[1])  + vec[1] + "\\hat{j} " + addSymbol(vec[2])  + vec[2] + "\\hat{k} \\) ";
+	vec = JSON.parse(sessionStorage.AcrossB);
+	document.getElementById('reveal2').innerHTML = " \\( " + vec[0] + "\\hat{i} " + addSymbol(vec[1])  + vec[1] + "\\hat{j} " + addSymbol(vec[2])  + vec[2] + "\\hat{k} \\) ";
+	vec = JSON.parse(sessionStorage.AdotB);
+	document.getElementById('reveal3').innerHTML = " \\( " + vec + " \\) ";
+	MathJax.Hub.Typeset();
+	document.getElementById("revealButton").disabled = true;
+	evalSuccess(goodAnswers);
+}
+
+function crossProduct(vec1, vec2){
+	v1 = vec1;
+	while(v1.length <3){
+		v1.push(0);
+	}
+	v2 = vec2;
+	while(v2.length <3){
+		v2.push(0);
+	}
+	cp = [(v1[1]*v2[2]-v1[2]*v2[1]), (v1[2]*v2[0]-v1[0]*v2[2]), (v1[0]*v2[1]-v1[1]*v2[0])];
+	return cp;
+}
+
+function dotProduct(vec1, vec2){
+	v1 = vec1;
+	while(v1.length <3){
+		v1.push(0);
+	}
+	v2 = vec2;
+	while(v2.length <3){
+		v2.push(0);
+	}
+	dp = v1[0]*v2[0]+v1[1]*v2[1]+v1[2]*v2[2];
+	return dp;
+}
+
+function vecSum(vec1, vec2){
+	v1 = vec1;
+	while(v1.length <3){
+		v1.push(0);
+	}
+	v2 = vec2;
+	while(v2.length <3){
+		v2.push(0);
+	}
+	vs = [v1[0]+v2[0], v1[1]+v2[1], v1[2]+v2[2]];
+	return vs;
+}
+
+function compareAnswer(submission, solution){
+	if(solution == 0){tempSolution = 1e-12;}
+	else{tempSolution = solution;}
+	return Math.abs(submission - solution)/Math.abs(tempSolution) <= 0.05;
+}
+
+function readNumber(inValue){
+
+	noCommas = inValue.replace(",", "");
+	return Number(noCommas);
+
+}
+
+function checkAnswers(){
+	goodAnswers = true;
+	
+		addCorrect = JSON.parse(sessionStorage.AplusB)
+		s1 = readNumber(document.getElementById('sumInput').xcomp.value);
+		s1c = addCorrect[0];
+		if(!compareAnswer(s1, s1c)){ goodAnswers = false;}
+		s2 = readNumber(document.getElementById('sumInput').ycomp.value);
+		s2c = addCorrect[1];
+		if(!compareAnswer(s2, s2c)){ goodAnswers = false;}
+		s3 = readNumber(document.getElementById('sumInput').zcomp.value);
+		s3c = addCorrect[2];
+		if(!compareAnswer(s3, s3c)){ goodAnswers = false;}
+	
+		crossCorrect = JSON.parse(sessionStorage.AcrossB)
+		c1 = readNumber(document.getElementById('crossInput').xcomp.value);
+		c1c = crossCorrect[0];
+		if(!compareAnswer(c1, c1c)){ goodAnswers = false;}
+		c2 = readNumber(document.getElementById('crossInput').ycomp.value);
+		c2c = crossCorrect[1];
+		if(!compareAnswer(c2, c2c)){ goodAnswers = false;}
+		c3 = readNumber(document.getElementById('crossInput').zcomp.value);
+		c3c = crossCorrect[2];
+		if(!compareAnswer(c3, c3c)){ goodAnswers = false;}
+	
+		dotCorrect = JSON.parse(sessionStorage.AdotB)
+		d1 = readNumber(document.getElementById('dotInput').product.value);
+		d1c = dotCorrect;
+		if(!compareAnswer(d1, d1c)){ goodAnswers = false;}
+
+	return goodAnswers;
+}
+
+function evalSuccess(success){
+	if(success){
+		document.getElementById('successResponse').innerHTML = "<span style='color: green'>Congratulations, your answer is correct!</span>";
+	}
+	else{
+		document.getElementById('successResponse').innerHTML = "<span style='color: red'>Incorrect. Try again.</span>";
+	}
+}
+</script>
+</head>
+
+<body onload="checkStorage(); setMaxVal(); setRankVal();">
+
+<!-- code holder
+
+-->
+
+<h1>This page will generate random vectors and operation solutions.</h1>
+
+<form id="dimensionChoice" onclick="setRankVal()"> <strong>Choose Vector Dimensions: </strong><input type="radio" name="dimchoice" value=1> 1-D  <input type="radio" name="dimchoice" value=2 checked> 2-D  <input type="radio" name="dimchoice" value=3> 3-D </form>
+
+<br>
+
+<form id="maxComp">
+  <strong>Component Maximum Value:</strong> 5
+  <input type="range" name="points" min="5" max="100" onclick="setMaxVal()"> 100
+</form>
+
+<br>
+
+<button type="button"
+onclick="genVector()">
+Click to generate a pair of vectors.</button>
+
+<p id="vector01"></p>
+
+<button type="button" id="revealButton"
+onclick="reveal()">
+Click to check your answers.</button>
+
+<p>\( (\vec{A} + \vec{B}) = \) <span id="reveal"></span><form id="sumInput"> <input type="text" name="xcomp" step="any" value=0> <strong>\( \hat{i} + \) </strong>  <input type="text" name="ycomp" step="any" value=0> <strong>\( \hat{j} + \) </strong>  <input type="text" name="zcomp" step="any" value=0> <strong>\( \hat{k} \) </strong> </form></p>
+<p>\( (\vec{A} \times \vec{B}) = \) <span id="reveal2"></span><form id="crossInput"> <input type="text" name="xcomp" step="any"> <strong>\( \hat{i} + \) </strong>  <input type="text" name="ycomp" step="any"> <strong>\( \hat{j} + \) </strong>  <input type="text" name="zcomp" step="any"> <strong>\( \hat{k} \) </strong> </form></p>
+<p>\( (\vec{A} \cdot \vec{B}) = \) <span id="reveal3"></span><form id="dotInput"> <input type="text" name="product" step="any"></form></p>
+
+<h2 id="successResponse"></h2>
+
+</body>
+</html> 
