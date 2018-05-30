@@ -65,7 +65,9 @@ function typeAsUnit(vec, vecName){
 function typeAsMagAngle(vec, vecName){
 	switch(vec.length){
 		case 1:
-			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + vec[0] + " \\end{pmatrix} \\) ";
+			mag = Math.abs(vec[0]);
+			theta = Math.atan2(0, vec[0])*180/Math.PI;
+			return " \\( \\vec{" + vecName + "} = \\begin{pmatrix} " + mag.toFixed(2) + " \\\\ " + theta.toFixed(2) + "^\\circ \\end{pmatrix} \\) ";
 			break;
 		case 2:
 			mag = Math.sqrt(Math.pow(vec[0], 2) + Math.pow(vec[1], 2));
